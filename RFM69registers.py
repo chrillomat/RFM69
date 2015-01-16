@@ -1085,7 +1085,7 @@ RF69_MODE_SYNTH	= 2 # PLL ON
 RF69_MODE_RX = 3 # RX MODE
 RF69_MODE_TX	= 4 # TX MODE
 
-COURSE_TEMP_COEF = -90 # puts the temperature reading in the ballpark, user can fine tune the returned value
+COURSE_TEMP_COEF = 165 # puts the temperature reading in the ballpark, user can fine tune the returned value
 RF69_BROADCAST_ADDR = 255
 RF69_CSMA_LIMIT_MS = 1000
 RF69_CSMA_LIMIT_S = 1
