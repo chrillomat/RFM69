@@ -2,7 +2,14 @@
 
 from RFM69registers import *
 import spidev
-import RPi.GPIO as GPIO
+
+try:
+    import RPIO
+    RPIOsupport=True
+except ImportError:
+    RPIOsupport=False
+    Logger.warn('RPIO not available - no hardware control')
+
 import time
 
 class RFM69():
@@ -24,8 +31,7 @@ class RFM69():
     self.RSSI = 0
     self.DATA = []
 
-    GPIO.setmode(GPIO.BOARD)
-    GPIO.setup(self.intPin, GPIO.IN)
+    RPIO.setup(self.intPin, RPIO.IN) # this is ok
 
     frfMSB = {RF69_315MHZ: RF_FRFMSB_315, RF69_433MHZ: RF_FRFMSB_433,
               RF69_868MHZ: RF_FRFMSB_868, RF69_915MHZ: RF_FRFMSB_915}
@@ -109,7 +115,8 @@ class RFM69():
     while (self.readReg(REG_IRQFLAGS1) & RF_IRQFLAGS1_MODEREADY) == 0x00:
       pass
 
-    GPIO.remove_event_detect(self.intPin)
+    RPIO.add_interrupt_callback(self.intPin, self.interruptHandler, edge='rising')
+    RPIO.wait_for_interrupts(threaded=True)
 
   def setFreqeuncy(self, FRF):
     self.writeReg(REG_FRFMSB, FRF >> 16)
@@ -120,7 +127,6 @@ class RFM69():
     if newMode == self.mode:
       return
 
-    GPIO.remove_event_detect(self.intPin)
     if newMode == RF69_MODE_TX:
       self.writeReg(REG_OPMODE, (self.readReg(REG_OPMODE) & 0xE3) | RF_OPMODE_TRANSMITTER)
       if self.isRFM69HW:
@@ -129,7 +135,6 @@ class RFM69():
       self.writeReg(REG_OPMODE, (self.readReg(REG_OPMODE) & 0xE3) | RF_OPMODE_RECEIVER)
       if self.isRFM69HW:
         self.setHighPowerRegs(False)
-      GPIO.add_event_detect(self.intPin, GPIO.RISING, callback=self.interruptHandler)
     elif newMode == RF69_MODE_SYNTH:
       self.writeReg(REG_OPMODE, (self.readReg(REG_OPMODE) & 0xE3) | RF_OPMODE_SYNTHESIZER)
     elif newMode == RF69_MODE_STANDBY:
@@ -226,8 +231,7 @@ class RFM69():
     self.spi.xfer([int(ord(i)) for i in list(buff)])
 
     self.setMode(RF69_MODE_TX)
-    GPIO.wait_for_edge(self.intPin, GPIO.RISING)
-    self.setMode(RF69_MODE_STANDBY)
+    # interuptHandler will set chip to standby once TX is finished
 
   def interruptHandler(self, pin):
     if self.mode == RF69_MODE_RX and self.readReg(REG_IRQFLAGS2) & RF_IRQFLAGS2_PAYLOADREADY:
@@ -249,6 +253,9 @@ class RFM69():
       self.DATA = self.spi.xfer([0 for i in range(0, self.DATALEN)])
 
       self.setMode(RF69_MODE_RX)
+    elif self.mode == RF69_MODE_TX:
+      self.setMode(RF69_MODE_STANDBY)
+
     self.RSSI = self.readRSSI()
 
   def receiveBegin(self):
@@ -269,7 +276,6 @@ class RFM69():
   def receiveDone(self):
     if self.mode == RF69_MODE_RX and self.PAYLOADLEN > 0:
       self.setMode(RF69_MODE_STANDBY)
-      GPIO.remove_event_detect(self.intPin)
       return True
     elif self.mode == RF69_MODE_RX:
       # already in RX no payload yet
@@ -346,4 +352,4 @@ class RFM69():
   def shutdown(self):
     self.setHighPower(False)
     self.sleep()
-    GPIO.cleanup()
+    RPIO.cleanup()
