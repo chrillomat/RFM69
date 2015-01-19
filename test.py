@@ -7,11 +7,11 @@ def readReg(addr):
 	return spi.xfer([addr & 0x7F, 0])[1]
 
 def writeReg(addr, value):
-	spi.xfer([addr | 0x80, value])
+	self.spi.xfer([addr | 0x80, value])	
 
 spi = spidev.SpiDev()
 spi.open(0, 0)
-spi.max_speed_hz = 4000000
+spi.max_speed_hz = 400000
 
 print spi.mode
 

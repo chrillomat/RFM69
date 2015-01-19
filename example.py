@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-
+from time import sleep
 import RFM69
 from RFM69registers import *
 
@@ -21,10 +21,17 @@ print test.readTemperature(0)
 #test.encrypt("1234567891011121")
 #print "sending blah to 0x03"
 #test.send(0x03, "blah", True)
-#print "reading"
-#test.receiveBegin()
-#while not test.receiveDone():
-#    pass
-#print test.DATA
-print "shutting down"
-test.shutdown()
+try:
+    print "reading"
+    test.receiveBegin()
+    while not test.receiveDone():
+	sleep(1)
+	#val=test.readRSSI(True)
+        val=str(hex(test.readReg(REG_IRQFLAGS1)))
+        print val
+    print test.DATA
+except KeyboardInterrupt:
+    print "user interrupted!"
+finally:
+    print "shutting down"
+    test.shutdown()
