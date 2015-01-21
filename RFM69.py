@@ -43,11 +43,16 @@ class RFM69():
     self.CONFIG = {
       0x01: [REG_OPMODE, RF_OPMODE_SEQUENCER_ON | RF_OPMODE_LISTEN_OFF | RF_OPMODE_STANDBY],
       #no shaping
-      0x02: [REG_DATAMODUL, RF_DATAMODUL_DATAMODE_PACKET | RF_DATAMODUL_MODULATIONTYPE_OOK | RF_DATAMODUL_MODULATIONSHAPING_00],
-      #default:4.8 KBPS
-      0x03: [REG_BITRATEMSB, 22],
-      0x04: [REG_BITRATELSB, 208],
+      0x02: [REG_DATAMODUL, RF_DATAMODUL_DATAMODE_PACKET | RF_DATAMODUL_MODULATIONTYPE_FSK | RF_DATAMODUL_MODULATIONSHAPING_00],
+      ##17241BPS
+      #  0x03: [REG_BITRATEMSB, 7],
+      #  0x04: [REG_BITRATELSB, 63],
+      #9579BPS
+        0x03: [REG_BITRATEMSB, 13],
+        0x04: [REG_BITRATELSB, 13],
 
+        0x05: [REG_FDEVMSB,0x05],
+        0x06: [REG_FDEVLSB,0xC3],
       0x07: [REG_FRFMSB, frfMSB[freqBand]],
       0x08: [REG_FRFMID, frfMID[freqBand]],
       0x09: [REG_FRFLSB, frfLSB[freqBand]],
@@ -60,19 +65,25 @@ class RFM69():
       0x11: [REG_PALEVEL, RF_PALEVEL_PA0_ON | RF_PALEVEL_PA1_OFF | RF_PALEVEL_PA2_OFF | RF_PALEVEL_OUTPUTPOWER_11111],
       #over current protection (default is 95mA)
       #0x13: [REG_OCP, RF_OCP_ON | RF_OCP_TRIM_95],
-
+      #  0x19: [REG_RXBW, RF_RXBW_DCCFREQ_010 | RF_RXBW_MANT_16 | RF_RXBW_EXP_2],
+        0x19: [REG_RXBW, RF_RXBW_DCCFREQ_010 | RF_RXBW_MANT_16 | RF_RXBW_EXP_0],
       # TX: packet sent
       0x25: [REG_DIOMAPPING1, RF_DIOMAPPING1_DIO0_00],
+        0x29: [REG_RSSITHRESH, 190],#220
+        0x2A: [REG_RXTIMEOUT1, 0],
+        0x2B: [REG_RXTIMEOUT2, 0],
       0x2C: [REG_PREAMBLEMSB, 0],
       0x2D: [REG_PREAMBLELSB, 0],
-      0x2E: [REG_SYNCCONFIG, 0],
-      0x37: [REG_PACKETCONFIG1, RF_PACKET1_FORMAT_VARIABLE | RF_PACKET1_DCFREE_OFF |
-      #0x37: [REG_PACKETCONFIG1, RF_PACKET1_FORMAT_FIXED | RF_PACKET1_DCFREE_OFF |
+        0x2E: [REG_SYNCCONFIG, RF_SYNC_ON | RF_SYNC_FIFOFILL_AUTO | RF_SYNC_SIZE_2 | RF_SYNC_TOL_0],
+        0x2F: [REG_SYNCVALUE1, 0x2D],
+        0x30: [REG_SYNCVALUE2, 0xDA],
+
+      0x37: [REG_PACKETCONFIG1, RF_PACKET1_FORMAT_FIXED | RF_PACKET1_DCFREE_OFF |
             RF_PACKET1_CRC_OFF | RF_PACKET1_CRCAUTOCLEAR_ON | RF_PACKET1_ADRSFILTERING_OFF],
-      #0x38: [REG_PAYLOADLENGTH, 16],
-      0x38: [REG_PAYLOADLENGTH, 0],
+        0x38: [REG_PAYLOADLENGTH, 5],
       #TX on FIFO not empty
       0x3C: [REG_FIFOTHRESH, RF_FIFOTHRESH_TXSTART_FIFONOTEMPTY | RF_FIFOTHRESH_VALUE],
+        0X3D: [REG_PACKETCONFIG2, 2],
     }
     #initialize SPI
     self.spi = spidev.SpiDev()
@@ -226,30 +237,18 @@ class RFM69():
 
   def interruptHandler(self, *args):
     # TODO for OOK
-    print "."
+    print "int"
     if self.mode == RF69_MODE_RX and self.readReg(REG_IRQFLAGS2) & RF_IRQFLAGS2_PAYLOADREADY:
       self.setMode(RF69_MODE_STANDBY)
       self.spi.xfer([REG_FIFO & 0x7f])
-      self.PAYLOADLEN = self.spi.xfer([0])
-      if self.PAYLOADLEN > 66:
-        self.PAYLOADLEN = 66
-      self.TARGETID = self.spi.xfer([0])
-      if not (self.promiscuousMode or self.TARGETID == self.address or self.TARGETID == RF69_BROADCAST_ADDR):
-        self.PAYLOADLEN = 0
-        return
-      self.DATALEN = self.PAYLOADLEN - 3
-      self.SENDERID = self.spi.xfer([0])
-      CTLbyte = self.spi.xfer([0])
-      self.ACK_RECEIVED = CTLbyte & 0x80
-      self.ACK_REQUESTED = CTLbyte & 0x40
-
-      self.DATA = self.spi.xfer([0 for i in range(0, self.DATALEN)])
-
+      self.DATA = self.spi.xfer([0 for i in range(0, 15)])
+      print self.DATA
       self.setMode(RF69_MODE_RX)
     elif self.mode == RF69_MODE_TX:
       self.setMode(RF69_MODE_STANDBY)
     # in any case, determine RSSI (DIO1 = RSSI in continuous mode
     self.RSSI = self.readRSSI()
+    print self.RSSI
 
   def receiveBegin(self):
     self.DATALEN = 0
@@ -263,7 +262,8 @@ class RFM69():
       # avoid RX deadlocks
       self.writeReg(REG_PACKETCONFIG2, (self.readReg(REG_PACKETCONFIG2) & 0xFB) | RF_PACKET2_RXRESTART)
     #set DIO0 to "PAYLOADREADY" in receive mode
-    #self.writeReg(REG_DIOMAPPING1, RF_DIOMAPPING1_DIO0_01)
+    #self.writeReg(REG_DIOMAPPING1, RF_DIOMAPPING1_DIO0_10)
+    self.writeReg(REG_DIOMAPPING1, RF_DIOMAPPING1_DIO0_01)
     self.setMode(RF69_MODE_RX)
 
   def receiveDone(self):

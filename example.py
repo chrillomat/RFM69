@@ -3,12 +3,12 @@ from time import sleep
 import RFM69
 from RFM69registers import *
 
-test = RFM69.RFM69(RF69_433MHZ, 0x01, 0x01, False)
+test = RFM69.RFM69(RF69_868MHZ, 0x01, 0x01, False)
 print "class initialized"
-#print "reading all registers"
-#results = test.readAllRegs()
-#for result in results:
-#    print result
+print "reading all registers"
+results = test.readAllRegs()
+for result in results:
+    print result
 print "Performing rcCalibration"
 test.rcCalibration()
 #print "setting high power"
@@ -18,12 +18,21 @@ print test.readTemperature(0)
 #print "sending blah to 0x02"
 #test.send(0x02, "blah", False)
 try:
+    print "reading"
+    test.receiveBegin()
+    #while not test.receiveDone():
     while True:
-        print "sending"
-        test.send(-1, [0x8E, 0x88, 0x8E, 0x88, 0x8E, 0x8E, 0x8E, 0x8E, 0xEE, 0x88, 0x88, 0xEE, 0x80, 0x00, 0x00, 0x00], False)
-        sleep(.1)
-        #print str(hex(test.readReg(REG_OPMODE)))
-        #print str(hex(test.readReg(REG_IRQFLAGS1)))
+        val=test.readReg(REG_IRQFLAGS1)
+        if val==216:
+            #pass
+            print '.'
+            #print test.readRSSI(True)
+            #print test.readReg(REG_AFCFEI)
+        else:
+            print str(hex(val))
+            print str(hex(test.readReg(REG_IRQFLAGS2)))
+        sleep(0.1)
+    print test.DATA
 except KeyboardInterrupt:
     print "user interrupted!"
 finally:
