@@ -5,6 +5,7 @@ import RFM69
 from RFM69registers import *
 
 test = RFM69.RFM69(RF69_433MHZ, 0x01, 0x01, False)
+test.setFrequency(433680000)
 print "class initialized"
 print "reading all registers"
 results = test.readAllRegs()

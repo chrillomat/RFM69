@@ -53,9 +53,9 @@ class RFM69():
       #  0x07: [REG_FRFMSB, frfMSB[freqBand]],
       #  0x08: [REG_FRFMID, frfMID[freqBand]],
       #  0x09: [REG_FRFLSB, frfLSB[freqBand]],
-        0x07: [REG_FRFMSB, 0x6C],
-        0x08: [REG_FRFMID, 0x80],
-        0x09: [REG_FRFLSB, 0x00],
+      #  0x07: [REG_FRFMSB, 0x6C],
+      #  0x08: [REG_FRFMID, 0x80],
+      #  0x09: [REG_FRFLSB, 0x00],
 
       #  0x0B: [REG_AFCCTRL, 0x20],
 
@@ -68,7 +68,7 @@ class RFM69():
       #over current protection (default is 95mA)
       #0x13: [REG_OCP, RF_OCP_ON | RF_OCP_TRIM_95],
 
-        0x19: [REG_RXBW, RF_RXBW_DCCFREQ_010 | RF_RXBW_MANT_16 | RF_RXBW_EXP_0],
+        0x19: [REG_RXBW, RF_RXBW_DCCFREQ_010 | RF_RXBW_MANT_16 | RF_RXBW_EXP_4],
       #  0x19: [REG_RXBW, RF_RXBW_DCCFREQ_010 | RF_RXBW_MANT_16 | RF_RXBW_EXP_2],
         0x1A: [REG_AFCBW, RF_RXBW_DCCFREQ_010 | RF_RXBW_MANT_16 | RF_RXBW_EXP_0],
       #  0x1A: [REG_AFCBW, RF_RXBW_DCCFREQ_010 | RF_RXBW_MANT_16 | RF_RXBW_EXP_2],
@@ -123,10 +123,15 @@ class RFM69():
     RPIO.add_interrupt_callback(self.intPin, self.interruptHandler, edge='rising')
     RPIO.wait_for_interrupts(threaded=True)
 
-  def setFreqeuncy(self, FRF):
-    self.writeReg(REG_FRFMSB, FRF >> 16)
-    self.writeReg(REG_FRFMID, FRF >> 8)
-    self.writeReg(REG_FRFLSB, FRF)
+  def setFrequency(self, FRF):
+    FRF=FRF/61
+    FRFMSB=(FRF>>16)%256
+    FRFMID=(FRF>>8)%256
+    FRFLSB=(FRF>>0)%256
+    #print str(hex(FRFMSB))+str(hex(FRFMID))+str(hex(FRFLSB))
+    self.writeReg(REG_FRFMSB, FRFMSB)
+    self.writeReg(REG_FRFMID, FRFMID)
+    self.writeReg(REG_FRFLSB, FRFLSB)
 
   def setMode(self, newMode):
     if newMode == self.mode:
