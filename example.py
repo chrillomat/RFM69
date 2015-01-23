@@ -5,8 +5,8 @@ import RFM69
 from RFM69registers import *
 
 test = RFM69.RFM69(RF69_433MHZ, 0x01, 0x01, False)
-test.setFrequency(433680000)
-test.setBitrate(1/(17.55e-3/12/8))
+test.setFrequency(867.8e6)
+test.setBitrate(9579)
 test.setFdev(90e3)
 
 print "class initialized"
