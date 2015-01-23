@@ -6,6 +6,9 @@ from RFM69registers import *
 
 test = RFM69.RFM69(RF69_433MHZ, 0x01, 0x01, False)
 test.setFrequency(433680000)
+test.setBitrate(1/(17.55e-3/12/8))
+test.setFdev(90e3)
+
 print "class initialized"
 print "reading all registers"
 results = test.readAllRegs()
@@ -30,12 +33,11 @@ try:
             print time.time()
             print str(hex(val))
             print str(hex(test.readReg(REG_IRQFLAGS2)))
-            #val2=str(hex(test.readReg(REG_AFCFEI)))
-            #print val2
-            #print str(hex(test.readReg(REG_AFCMSB)))
-            #print str(hex(test.readReg(REG_AFCLSB)))
-            #print str(hex(test.readReg(REG_FEIMSB)))
-            #print str(hex(test.readReg(REG_FEILSB)))
+            print str(hex(test.readReg(REG_AFCFEI)))
+            print str(hex(test.readReg(REG_AFCMSB)))
+            print str(hex(test.readReg(REG_AFCLSB)))
+            print str(hex(test.readReg(REG_FEIMSB)))
+            print str(hex(test.readReg(REG_FEILSB)))
         time.sleep(0.1)
         val_old=val
     print test.DATA
