@@ -1,5 +1,6 @@
 #!/usr/bin/env python
-from time import sleep
+#from time import sleep
+import time
 import RFM69
 from RFM69registers import *
 
@@ -19,19 +20,23 @@ print test.readTemperature(0)
 #test.send(0x02, "blah", False)
 try:
     print "reading"
+    val_old=0xFF
     test.receiveBegin()
     #while not test.receiveDone():
     while True:
         val=test.readReg(REG_IRQFLAGS1)
-        if val==216:
-            #pass
-            print '.'
-            #print test.readRSSI(True)
-            #print test.readReg(REG_AFCFEI)
-        else:
+        if val!=val_old:
+            print time.time()
             print str(hex(val))
             print str(hex(test.readReg(REG_IRQFLAGS2)))
-        sleep(0.1)
+            #val2=str(hex(test.readReg(REG_AFCFEI)))
+            #print val2
+            #print str(hex(test.readReg(REG_AFCMSB)))
+            #print str(hex(test.readReg(REG_AFCLSB)))
+            #print str(hex(test.readReg(REG_FEIMSB)))
+            #print str(hex(test.readReg(REG_FEILSB)))
+        time.sleep(0.1)
+        val_old=val
     print test.DATA
 except KeyboardInterrupt:
     print "user interrupted!"
