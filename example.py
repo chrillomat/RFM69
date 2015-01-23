@@ -26,8 +26,8 @@ try:
     print "reading"
     val_old=0xFF
     test.receiveBegin()
-    #while not test.receiveDone():
-    while True:
+    while not test.receiveDone():
+    #while True:
         val=test.readReg(REG_IRQFLAGS1)
         if val!=val_old:
             print time.time()
@@ -40,7 +40,12 @@ try:
             print str(hex(test.readReg(REG_FEILSB)))
         time.sleep(0.1)
         val_old=val
-    print test.DATA
+    if sum(test.DATA)%256 == 0:
+        print test.DATA
+        print ((test.DATA[2]-50)*10+test.DATA[3])/10.0
+        print test.DATA[4]
+    else:
+        print 'CRC not OK'
 except KeyboardInterrupt:
     print "user interrupted!"
 finally:

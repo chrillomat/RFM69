@@ -232,11 +232,11 @@ class RFM69():
   def interruptHandler(self, *args):
     # TODO for OOK
     print "int: " + str(time.time())
-    if self.mode == RF69_MODE_RX:# and self.readReg(REG_IRQFLAGS2) & RF_IRQFLAGS2_PAYLOADREADY:
+    if self.mode == RF69_MODE_RX and self.readReg(REG_IRQFLAGS2) & RF_IRQFLAGS2_PAYLOADREADY:
       self.setMode(RF69_MODE_STANDBY)
       self.spi.xfer([REG_FIFO & 0x7f])
-      self.DATA = self.spi.xfer([0 for i in range(0, 7)])
-      print self.DATA[1:]
+      self.DATA = self.spi.xfer([0 for i in range(0, 7)])[1:]
+      self.PAYLOADLEN=6
       self.setMode(RF69_MODE_RX)
     elif self.mode == RF69_MODE_TX:
       self.setMode(RF69_MODE_STANDBY)
