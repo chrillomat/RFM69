@@ -43,55 +43,60 @@ class RFM69():
     self.CONFIG = {
       0x01: [REG_OPMODE, RF_OPMODE_SEQUENCER_ON | RF_OPMODE_LISTEN_OFF | RF_OPMODE_STANDBY],
       #no shaping
-      0x02: [REG_DATAMODUL, RF_DATAMODUL_DATAMODE_PACKET | RF_DATAMODUL_MODULATIONTYPE_FSK | RF_DATAMODUL_MODULATIONSHAPING_00],
-      #0x02: [REG_DATAMODUL, RF_DATAMODUL_DATAMODE_PACKET | RF_DATAMODUL_MODULATIONTYPE_OOK | RF_DATAMODUL_MODULATIONSHAPING_00],
-      ##17241BPS
-      #  0x03: [REG_BITRATEMSB, 7],
-      #  0x04: [REG_BITRATELSB, 63],
-      #9579BPS
-        0x03: [REG_BITRATEMSB, 13],
-        0x04: [REG_BITRATELSB, 13],
+      0x02: [REG_DATAMODUL, RF_DATAMODUL_DATAMODE_PACKET | RF_DATAMODUL_MODULATIONTYPE_OOK | RF_DATAMODUL_MODULATIONSHAPING_00],
+        0x03: [REG_BITRATEMSB, 22],
+        0x04: [REG_BITRATELSB, 208],
 
-        0x05: [REG_FDEVMSB,0x05],
-        0x06: [REG_FDEVLSB,0xC3],
-        0x07: [REG_FRFMSB, 0xD9],
-        0x08: [REG_FRFMID, 0x20],#0x20
-        0x09: [REG_FRFLSB, 0x04],#0x04
-        0x0B: [REG_AFCCTRL, 0x20],
+      #  0x05: [REG_FDEVMSB,0x05],
+      #  0x06: [REG_FDEVLSB,0xC3],
+
+      #  0x07: [REG_FRFMSB, frfMSB[freqBand]],
+      #  0x08: [REG_FRFMID, frfMID[freqBand]],
+      #  0x09: [REG_FRFLSB, frfLSB[freqBand]],
+        0x07: [REG_FRFMSB, 0x6C],
+        0x08: [REG_FRFMID, 0x80],
+        0x09: [REG_FRFLSB, 0x00],
+
+      #  0x0B: [REG_AFCCTRL, 0x20],
 
       # looks like PA1 and PA2 are not implemented on RFM69W, hence the max output power is 13dBm
       # +17dBm and +20dBm are possible on RFM69HW
       # +13dBm formula: Pout=-18+OutputPower (with PA0 or PA1**)
       # +17dBm formula: Pout=-14+OutputPower (with PA1 and PA2)**
       # +20dBm formula: Pout=-11+OutputPower (with PA1 and PA2)** and high power PA settings (section 3.3.7 in datasheet)
-      0x11: [REG_PALEVEL, RF_PALEVEL_PA0_ON | RF_PALEVEL_PA1_OFF | RF_PALEVEL_PA2_OFF | RF_PALEVEL_OUTPUTPOWER_11111],
+      #0x11: [REG_PALEVEL, RF_PALEVEL_PA0_ON | RF_PALEVEL_PA1_OFF | RF_PALEVEL_PA2_OFF | RF_PALEVEL_OUTPUTPOWER_11111],
       #over current protection (default is 95mA)
       #0x13: [REG_OCP, RF_OCP_ON | RF_OCP_TRIM_95],
-      #  0x19: [REG_RXBW, RF_RXBW_DCCFREQ_010 | RF_RXBW_MANT_16 | RF_RXBW_EXP_2],
+
         0x19: [REG_RXBW, RF_RXBW_DCCFREQ_010 | RF_RXBW_MANT_16 | RF_RXBW_EXP_0],
+      #  0x19: [REG_RXBW, RF_RXBW_DCCFREQ_010 | RF_RXBW_MANT_16 | RF_RXBW_EXP_2],
         0x1A: [REG_AFCBW, RF_RXBW_DCCFREQ_010 | RF_RXBW_MANT_16 | RF_RXBW_EXP_0],
+      #  0x1A: [REG_AFCBW, RF_RXBW_DCCFREQ_010 | RF_RXBW_MANT_16 | RF_RXBW_EXP_2],
+
       #  0x1E: [REG_AFCFEI, 12],
       #  0x1E: [REG_AFCFEI, 0],
-          0x1E: [REG_AFCFEI, 0x2C],
+      #    0x1E: [REG_AFCFEI, 0x00],
       # TX: packet sent
-      0x25: [REG_DIOMAPPING1, RF_DIOMAPPING1_DIO0_00],
-        0x29: [REG_RSSITHRESH, 190],#220
-        0x2A: [REG_RXTIMEOUT1, 0],
-        0x2B: [REG_RXTIMEOUT2, 0],
-      0x2C: [REG_PREAMBLEMSB, 0],
-        0x2D: [REG_PREAMBLELSB, 0x03],
+      #0x25: [REG_DIOMAPPING1, RF_DIOMAPPING1_DIO0_00],
+      #  0x29: [REG_RSSITHRESH, 190],#220
+      #  0x2A: [REG_RXTIMEOUT1, 0],
+      #  0x2B: [REG_RXTIMEOUT2, 0],
+      #0x2C: [REG_PREAMBLEMSB, 0],
+      #  0x2D: [REG_PREAMBLELSB, 0x03],
       #  0x2E: [REG_SYNCCONFIG, RF_SYNC_ON | RF_SYNC_FIFOFILL_AUTO | RF_SYNC_SIZE_2 | RF_SYNC_TOL_0],
-        0x2E: [REG_SYNCCONFIG, RF_SYNC_ON | RF_SYNC_FIFOFILL_MANUAL | RF_SYNC_SIZE_2 | RF_SYNC_TOL_0],
-      #  0x2E: [REG_SYNCCONFIG, RF_SYNC_ON | RF_SYNC_FIFOFILL_AUTO | RF_SYNC_SIZE_1 | RF_SYNC_TOL_0],
-        0x2F: [REG_SYNCVALUE1, 0x2D],
-        0x30: [REG_SYNCVALUE2, 0xDA],
+      #  0x2E: [REG_SYNCCONFIG, RF_SYNC_ON | RF_SYNC_FIFOFILL_MANUAL | RF_SYNC_SIZE_2 | RF_SYNC_TOL_0],
+        0x2E: [REG_SYNCCONFIG, RF_SYNC_ON | RF_SYNC_FIFOFILL_AUTO | RF_SYNC_SIZE_4 | RF_SYNC_TOL_0],
+        0x2F: [REG_SYNCVALUE1, 0x80],
+        0x30: [REG_SYNCVALUE2, 0x00],
+        0x31: [REG_SYNCVALUE3, 0x00],
+        0x32: [REG_SYNCVALUE4, 0x00],
 
       0x37: [REG_PACKETCONFIG1, RF_PACKET1_FORMAT_FIXED | RF_PACKET1_DCFREE_OFF |
             RF_PACKET1_CRC_OFF | RF_PACKET1_CRCAUTOCLEAR_ON | RF_PACKET1_ADRSFILTERING_OFF],
-        0x38: [REG_PAYLOADLENGTH, 16],
+        0x38: [REG_PAYLOADLENGTH, 12],
       #TX on FIFO not empty
-      0x3C: [REG_FIFOTHRESH, RF_FIFOTHRESH_TXSTART_FIFONOTEMPTY | RF_FIFOTHRESH_VALUE],
-        0X3D: [REG_PACKETCONFIG2, 2],
+      #0x3C: [REG_FIFOTHRESH, RF_FIFOTHRESH_TXSTART_FIFONOTEMPTY | RF_FIFOTHRESH_VALUE],
+      #  0X3D: [REG_PACKETCONFIG2, 2],
     }
     #initialize SPI
     self.spi = spidev.SpiDev()
@@ -249,8 +254,8 @@ class RFM69():
     if self.mode == RF69_MODE_RX:# and self.readReg(REG_IRQFLAGS2) & RF_IRQFLAGS2_PAYLOADREADY:
       self.setMode(RF69_MODE_STANDBY)
       self.spi.xfer([REG_FIFO & 0x7f])
-      self.DATA = self.spi.xfer([0 for i in range(0, 15)])
-      print self.DATA
+      self.DATA = self.spi.xfer([0 for i in range(0, 13)])
+      print self.DATA[1:]
       self.setMode(RF69_MODE_RX)
     elif self.mode == RF69_MODE_TX:
       self.setMode(RF69_MODE_STANDBY)

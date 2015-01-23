@@ -4,7 +4,7 @@ import time
 import RFM69
 from RFM69registers import *
 
-test = RFM69.RFM69(RF69_868MHZ, 0x01, 0x01, False)
+test = RFM69.RFM69(RF69_433MHZ, 0x01, 0x01, False)
 print "class initialized"
 print "reading all registers"
 results = test.readAllRegs()
